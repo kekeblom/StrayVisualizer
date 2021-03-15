@@ -24,6 +24,7 @@ def read_args():
     parser.add_argument('--frames', '-f', action='store_true', help="Visualize camera coordinate frames from the odometry file.")
     parser.add_argument('--point-clouds', '-p', action='store_true', help="Show concatenated point clouds.")
     parser.add_argument('--integrate', '-i', action='store_true', help="Integrate point clouds using the Open3D RGB-D integration pipeline, and visualize it.")
+    parser.add_argument('--mesh_filename', type=str, help='Mesh generated from point cloud integration will be stored in this file. open3d.io.write_triangle_mesh will be used.', default=None)
     parser.add_argument('--every', type=int, default=60, help="Show only every nth point cloud and coordinate frames. Only used for point cloud and odometry visualization.")
     parser.add_argument('--voxel-size', type=float, default=0.015, help="Voxel size in meters to use in RGB-D integration.")
     parser.add_argument('--confidence', '-c', type=int, default=1,
@@ -133,7 +134,7 @@ def integrate(flags, data):
 
     flags: command line arguments
     data: dict with keys ['intrinsics', 'poses']
-    Returns: [open3d.geometry.TriangleMesh]
+    Returns: open3d.geometry.TriangleMesh
     """
     volume = o3d.pipelines.integration.ScalableTSDFVolume(
             voxel_length=flags.voxel_size,
@@ -158,7 +159,7 @@ def integrate(flags, data):
         volume.integrate(rgbd, intrinsics, np.linalg.inv(T_WC))
     mesh = volume.extract_triangle_mesh()
     mesh.compute_vertex_normals()
-    return [mesh]
+    return mesh
 
 
 def validate(flags):
@@ -188,7 +189,10 @@ def main():
     if flags.point_clouds:
         geometries += point_clouds(flags, data)
     if flags.integrate:
-        geometries += integrate(flags, data)
+        mesh = integrate(flags, data)
+        if flags.mesh_filename is not None:
+            o3d.io.write_triangle_mesh(flags.mesh_filename, mesh)
+        geometries += [mesh]
     o3d.visualization.draw_geometries(geometries)
 
 if __name__ == "__main__":
