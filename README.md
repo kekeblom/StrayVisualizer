@@ -31,6 +31,7 @@ Available command line options are:
 - `--trajectory` shows a black line for the trajectory of the camera.
 - `--integrate` will run the data through the Open3D RGB-D integration pipeline and visualize the resulting mesh.
 - `--voxel-size=<size>` sets the voxel size in meters for RGB-D integration.
+- `--mesh-filename` save the mesh from RGB-D integration into the given file. Defaults to no mesh saved.
 
 ## Creating a Video From the Depth Maps
 
