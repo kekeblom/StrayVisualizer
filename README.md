@@ -6,6 +6,8 @@ A set of scripts to work with data collected using [Stray Scanner](https://apps.
 
 ## Usage
 
+To access the data from your device, see [this wiki entry](https://github.com/kekeblom/StrayVisualizer/wiki/Accessing-Data).
+
 ### Installing Dependencies
 
 Install dependencies with `pip -r requirements.txt`.
