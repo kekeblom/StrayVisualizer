@@ -47,7 +47,7 @@ def read_data(flags):
 
     for line in odometry:
         # x, y, z, qx, qy, qz, qw
-        position = line[0:3]
+        position = line[:3]
         quaternion = line[3:]
         T_WC = np.eye(4)
         T_WC[:3, :3] = Rotation.from_quat(quaternion).as_matrix()
