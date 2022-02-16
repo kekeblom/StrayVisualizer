@@ -46,17 +46,23 @@ def read_data(flags):
     poses = []
 
     for line in odometry:
-        # x, y, z, qx, qy, qz, qw
+        # timestamp, frame, x, y, z, qx, qy, qz, qw
         position = line[2:5]
         quaternion = line[5:]
         T_WC = np.eye(4)
         T_WC[:3, :3] = Rotation.from_quat(quaternion).as_matrix()
         T_WC[:3, 3] = position
         poses.append(T_WC)
-    return { 'poses': poses, 'intrinsics': intrinsics }
+    depth_dir = os.path.join(flags.path, 'depth')
+    depth_frames = [os.path.join(depth_dir, p) for p in sorted(os.listdir(depth_dir))]
+    depth_frames = [f for f in depth_frames if '.npy' in f or '.png' in f]
+    return { 'poses': poses, 'intrinsics': intrinsics, 'depth_frames': depth_frames }
 
 def load_depth(path, confidence=None, filter_level=0):
-    depth_mm = np.load(path)
+    if path[-4:] == '.npy':
+        depth_mm = np.load(path)
+    elif path[-4:] == '.png':
+        depth_mm = np.array(Image.open(path))
     depth_m = depth_mm.astype(np.float32) / 1000.0
     if confidence is not None:
         depth_m[confidence < filter_level] = 0.0
@@ -124,7 +130,8 @@ def point_clouds(flags, data):
         print(f"Point cloud {i}", end="\r")
         T_CW = np.linalg.inv(T_WC)
         confidence = load_confidence(os.path.join(flags.path, 'confidence', f'{i:06}.png'))
-        depth = load_depth(os.path.join(flags.path, 'depth', f'{i:06}.npy'), confidence, filter_level=flags.confidence)
+        depth_path = data['depth_frames'][i]
+        depth = load_depth(depth_path, confidence, filter_level=flags.confidence)
         pc += o3d.geometry.PointCloud.create_from_depth_image(depth, intrinsics, extrinsic=T_CW, depth_scale=1.0)
     return [pc]
 
@@ -147,7 +154,7 @@ def integrate(flags, data):
     video = skvideo.io.vreader(rgb_path)
     for i, (T_WC, rgb) in enumerate(zip(data['poses'], video)):
         print(f"Integrating frame {i:06}", end='\r')
-        depth_path = os.path.join(flags.path, 'depth', f'{i:06}.npy')
+        depth_path = data['depth_frames'][i]
         depth = load_depth(depth_path)
         rgb = Image.fromarray(rgb)
         rgb = rgb.resize((DEPTH_WIDTH, DEPTH_HEIGHT))
