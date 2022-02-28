@@ -54,5 +54,9 @@ Beware that the Open3D reconstruction system takes up quite a lot of memory and 
 If you find any issues with this project or bugs in the Stray Scanner app, you can open an issue on this repository.
 
 
+## Related Projects
+
+[PyojinKim](https://github.com/PyojinKim) created a set of [helpful scripts](https://github.com/PyojinKim/StrayScannerVisualizer) to work with data collected with the App in Matlab.
+
 
 
