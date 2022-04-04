@@ -16,6 +16,7 @@ Basic usage: python stray_visualize.py <path-to-dataset-folder>
 
 DEPTH_WIDTH = 256
 DEPTH_HEIGHT = 192
+MAX_DEPTH = 20.0
 
 def read_args():
     parser = ArgumentParser(description=description, usage=usage)
@@ -124,7 +125,9 @@ def point_clouds(flags, data):
     intrinsics = get_intrinsics(data['intrinsics'])
     pc = o3d.geometry.PointCloud()
     meshes = []
-    for i, T_WC in enumerate(data['poses']):
+    rgb_path = os.path.join(flags.path, 'rgb.mp4')
+    video = skvideo.io.vreader(rgb_path)
+    for i, (T_WC, rgb) in enumerate(zip(data['poses'], video)):
         if i % flags.every != 0:
             continue
         print(f"Point cloud {i}", end="\r")
@@ -132,7 +135,13 @@ def point_clouds(flags, data):
         confidence = load_confidence(os.path.join(flags.path, 'confidence', f'{i:06}.png'))
         depth_path = data['depth_frames'][i]
         depth = load_depth(depth_path, confidence, filter_level=flags.confidence)
-        pc += o3d.geometry.PointCloud.create_from_depth_image(depth, intrinsics, extrinsic=T_CW, depth_scale=1.0)
+        rgb = Image.fromarray(rgb)
+        rgb = rgb.resize((DEPTH_WIDTH, DEPTH_HEIGHT))
+        rgb = np.array(rgb)
+        rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
+            o3d.geometry.Image(rgb), depth,
+            depth_scale=1.0, depth_trunc=MAX_DEPTH, convert_rgb_to_intensity=False)
+        pc += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics, extrinsic=T_CW)
     return [pc]
 
 def integrate(flags, data):
@@ -161,7 +170,7 @@ def integrate(flags, data):
         rgb = np.array(rgb)
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
             o3d.geometry.Image(rgb), depth,
-            depth_scale=1.0, depth_trunc=4.0, convert_rgb_to_intensity=False)
+            depth_scale=1.0, depth_trunc=MAX_DEPTH, convert_rgb_to_intensity=False)
 
         volume.integrate(rgbd, intrinsics, np.linalg.inv(T_WC))
     mesh = volume.extract_triangle_mesh()

@@ -14,12 +14,12 @@ Install dependencies with `pip -r requirements.txt`.
 
 ### Example Datasets
 
-If you don't have your own dataset, download one of these example datasets:
-- `wget https://stray-data.nyc3.digitaloceanspaces.com/datasets/ZB1.tar.gz`
-- `wget https://stray-data.nyc3.digitaloceanspaces.com/datasets/ZB2.tar.gz`
-- `wget https://stray-data.nyc3.digitaloceanspaces.com/datasets/ZB3.tar.gz`
-
-Assuming you selected `ZB1.tar.gz`, you can extract the dataset using the command `tar -xvf ZB1.tar.gz`.
+If you don't have your own dataset, you can download one of these example datasets:
+```
+wget https://stray-data.nyc3.digitaloceanspaces.com/datasets/dinosaur.tar.gz
+tar -xvf dinosaur.tar.gz
+python stray_visualize.py dinosaur/
+```
 
 ## Visualizing the data
 
