@@ -4,6 +4,7 @@ import numpy as np
 import json
 import cv2
 from skvideo import io
+from PIL import Image
 from stray_visualize import DEPTH_WIDTH, DEPTH_HEIGHT, _resize_camera_matrix
 
 FRAME_WIDTH = 1920
@@ -39,15 +40,15 @@ def write_depth(flags, depth_out_dir):
     confidence_dir = os.path.join(flags.dataset, 'confidence')
     files = sorted(os.listdir(depth_dir_in))
     for filename in files:
-        if '.npy' not in filename:
+        if not ('.npy' in filename or '.png' in filename):
             continue
         print(f"Writing depth frame {filename}", end='\r')
         number, _ = filename.split('.')
-        depth = np.load(os.path.join(depth_dir_in, filename))
         confidence = cv2.imread(os.path.join(confidence_dir, number + '.png'))[:, :, 0]
+        depth = np.array(Image.open(os.path.join(depth_dir_in, filename)))
         depth[confidence < flags.confidence] = 0
         depth = resize_depth(depth)
-        cv2.imwrite(os.path.join(depth_out_dir, number + '.png'), depth)
+        cv2.imwrite(os.path.join(depth_out_dir, f'{number}.png'), depth)
 
 def write_intrinsics(flags):
     intrinsics = np.loadtxt(os.path.join(flags.dataset, 'camera_matrix.csv'), delimiter=',')
